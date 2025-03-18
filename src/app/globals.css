@@ -2,26 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Base Styles */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --space-black: #0A0A0B;
+  --stellar-white: #F5F6F5;
+  --midnight-blue: #1A2533;
+  --glow-cyan: #00D4FF;
+  --cosmic-purple: #8B5CF6;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  @apply bg-space-black text-stellar-white font-sans;
+  overflow-x: hidden;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+/* Custom Components */
+@layer components {
+  /* Futuristic Button */
+  .btn-futuristic {
+    @apply bg-gradient-to-r from-glow-cyan to-cosmic-purple text-space-black font-semibold py-3 px-6 rounded-xl shadow-glow-md hover:shadow-glow-lg transition-all duration-300;
   }
+
+  /* Card with Neumorphic and Glow Effects */
+  .card-futuristic {
+    @apply bg-midnight-blue border border-glow-cyan/20 rounded-2xl p-6 shadow-glow-md hover:shadow-glow-lg transition-all duration-300;
+  }
+
+  /* Header with Gradient Text */
+  .header-gradient {
+    @apply bg-clip-text text-transparent bg-cosmic-gradient font-display font-bold;
+  }
+
+  /* Input Field */
+  .input-futuristic {
+    @apply w-full p-4 bg-space-black/80 border border-glow-cyan/30 rounded-xl text-stellar-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-glow-cyan transition-all duration-300;
+  }
+
+  /* Navigation Bar */
+  .nav-futuristic {
+    @apply fixed top-0 left-0 w-full bg-space-black/90 backdrop-blur-md text-stellar-white py-4 shadow-glow-md z-50;
+  }
+}
+
+/* Global Effects */
+.hover-glow {
+  @apply hover:shadow-glow-lg transition-all duration-300;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-space-black;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-glow-cyan rounded-full;
 }
