@@ -3,9 +3,9 @@
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import axios from "axios";
-import Navbar from "../components/Navbar";
-import ProtectedRoute from "../components/ProtectedRoute";
-import EventCard from "../components/EventCard";
+import Navbar from "../components/navbar/page";
+import ProtectedRoute from "../components/protected/page";
+import EventCard from "../components/eventcard/page";
 
 export default function DashboardPage() {
   const { data: session } = useSession();

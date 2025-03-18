@@ -1,49 +1,43 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    "./pages/**/*.{js,ts,jsx,tsx}",
-    "./components/**/*.{js,ts,jsx,tsx}",
+    "./src/**/*.{js,ts,jsx,tsx}", // Ensure this includes your Navbar file
   ],
   theme: {
     extend: {
-      // Custom Colors
       colors: {
-        "space-black": "#0A0A0B", // Deep, near-black background
-        "stellar-white": "#F5F6F5", // Slightly off-white for text
-        "midnight-blue": "#1A2533", // Dark accent for cards
-        "nebula-blue": "#4B5EAA", // Cool, futuristic blue
-        "glow-cyan": "#00D4FF", // Neon cyan for highlights
-        "cosmic-purple": "#8B5CF6", // Vibrant purple for gradients
-        "dark-matter": "#2D1B3F", // Subtle dark purple accent
+        "space-black": "#0A0A0B",
+        "stellar-white": "#F5F6F5",
+        "midnight-blue": "#1A2533",
+        "nebula-blue": "#4B5EAA",
+        "glow-cyan": "#00D4FF",
+        "cosmic-purple": "#8B5CF6",
+        "dark-matter": "#2D1B3F",
       },
-      // Gradients
       backgroundImage: {
-        "cosmic-gradient": "linear-gradient(135deg, #00D4FF, #8B5CF6)", // Cyan to purple
-        "nebula-gradient": "linear-gradient(90deg, #4B5EAA, #2D1B3F)", // Blue to dark purple
-        "glow-gradient": "radial-gradient(circle, #00D4FF 0%, #0A0A0B 70%)", // Neon glow effect
+        "cosmic-gradient": "linear-gradient(135deg, #00D4FF, #8B5CF6)",
+        "nebula-gradient": "linear-gradient(90deg, #4B5EAA, #2D1B3F)",
+        "glow-gradient": "radial-gradient(circle, #00D4FF 0%, #0A0A0B 70%)",
       },
-      // Fonts
       fontFamily: {
-        sans: ["Inter", "sans-serif"], // Clean, modern font
-        display: ["Orbitron", "sans-serif"], // Futuristic, techy font
+        sans: ["Inter", "sans-serif"],
+        display: ["Orbitron", "sans-serif"],
       },
-      // Shadows for Glow and Depth
       boxShadow: {
-        "glow-md": "0 0 15px rgba(0, 212, 255, 0.5)", // Subtle cyan glow
-        "glow-lg": "0 0 25px rgba(0, 212, 255, 0.7)", // Stronger glow
-        "neumorphic": "8px 8px 16px #0A0A0B, -8px -8px 16px #1A2533", // Soft 3D effect
+        "glow-md": "0 0 15px rgba(0, 212, 255, 0.5)",
+        "glow-lg": "0 0 25px rgba(0, 212, 255, 0.7)",
+        neumorphic: "8px 8px 16px #0A0A0B, -8px -8px 16px #1A2533",
+        inner: "inset 0 2px 4px rgba(139, 92, 246, 0.3)",
       },
-      // Border Radius for Sleekness
       borderRadius: {
-        "xl": "1rem",
+        xl: "1rem",
         "2xl": "1.5rem",
       },
-      // Transitions for Smooth Interactions
       transitionProperty: {
-        "all": "all",
+        all: "all",
       },
       transitionDuration: {
-        "300": "300ms",
+        300: "300ms",
       },
     },
   },
