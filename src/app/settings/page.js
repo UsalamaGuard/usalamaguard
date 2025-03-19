@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useState } from "react";
 import axios from "axios";
 import Navbar from "../components/navbar/page";
-import ProtectedRoute from "../components/ProtectedRoute";
+
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -26,7 +26,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <ProtectedRoute>
+
       <div className="bg-space-black text-stellar-white min-h-screen">
         <Navbar />
         <section className="pt-24 pb-16 max-w-7xl mx-auto px-6">
@@ -50,6 +50,6 @@ export default function SettingsPage() {
           </form>
         </section>
       </div>
-    </ProtectedRoute>
+  
   );
 }
