@@ -1,5 +1,6 @@
 import localFont from "next/font/local";
 import ClientProvider from "./components/ClientProvider";
+import { ThemeProvider } from "./context/ThemeContext"; // Import ThemeProvider
 import "./globals.css";
 
 // Define custom fonts
@@ -22,9 +23,11 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ClientProvider>{children}</ClientProvider>
+    <html lang="en" className="scroll-smooth">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-text`}>
+        <ThemeProvider>
+          <ClientProvider>{children}</ClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

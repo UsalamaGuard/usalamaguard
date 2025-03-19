@@ -2,17 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Base Styles */
+/* Base Styles with Theme Variables */
 :root {
   --space-black: #0A0A0B;
   --stellar-white: #F5F6F5;
   --midnight-blue: #1A2533;
   --glow-cyan: #00D4FF;
   --cosmic-purple: #8B5CF6;
+  --dark-matter: #2D1B3F;
+  --background: #0A0A0B;
+  --text: #F5F6F5;
+  --card-bg: #1A2533;
+  --shadow-glow: rgba(0, 212, 255, 0.5);
+}
+
+:root.light {
+  --space-black: #F5F6F5;
+  --stellar-white: #0A0A0B;
+  --midnight-blue: #E5ECEF;
+  --glow-cyan: #00A3CC;
+  --cosmic-purple: #6D28D9;
+  --dark-matter: #D1C4E9;
+  --background: #F5F6F5;
+  --text: #0A0A0B;
+  --card-bg: #E5ECEF;
+  --shadow-glow: rgba(0, 163, 204, 0.5);
 }
 
 body {
-  @apply bg-space-black text-stellar-white font-sans;
+  @apply bg-background text-text font-sans;
   overflow-x: hidden;
 }
 
@@ -20,12 +38,12 @@ body {
 @layer components {
   /* Futuristic Button */
   .btn-futuristic {
-    @apply bg-gradient-to-r from-glow-cyan to-cosmic-purple text-space-black font-semibold py-3 px-6 rounded-xl shadow-glow-md hover:shadow-glow-lg transition-all duration-300;
+    @apply bg-gradient-to-r from-glow-cyan to-cosmic-purple text-background font-semibold py-3 px-6 rounded-xl shadow-glow-md hover:shadow-glow-lg transition-all duration-300;
   }
 
   /* Card with Neumorphic and Glow Effects */
   .card-futuristic {
-    @apply bg-midnight-blue border border-glow-cyan/20 rounded-2xl p-6 shadow-glow-md hover:shadow-glow-lg transition-all duration-300;
+    @apply bg-card-bg border border-glow-cyan/20 rounded-2xl p-6 shadow-glow-md hover:shadow-glow-lg transition-all duration-300;
   }
 
   /* Header with Gradient Text */
@@ -35,12 +53,13 @@ body {
 
   /* Input Field */
   .input-futuristic {
-    @apply w-full p-4 bg-space-black/80 border border-glow-cyan/30 rounded-xl text-stellar-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-glow-cyan transition-all duration-300;
+    @apply w-full p-4 bg-background/80 border border-glow-cyan/30 rounded-xl text-text placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-glow-cyan transition-all duration-300;
   }
 
   /* Navigation Bar */
   .nav-futuristic {
-    @apply fixed top-0 left-0 w-full bg-space-black/90 backdrop-blur-md text-stellar-white py-4 shadow-glow-md z-50;
+    @apply fixed top-0 left-0 w-full backdrop-blur-md text-text py-4 shadow-glow-md z-50;
+    background-color: rgba(var(--background-rgb), 0.9); /* Use raw CSS for opacity */
   }
 }
 
@@ -54,8 +73,18 @@ body {
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  @apply bg-space-black;
+  @apply bg-background;
 }
 ::-webkit-scrollbar-thumb {
   @apply bg-glow-cyan rounded-full;
+}
+
+/* Shadow Utilities */
+@layer utilities {
+  .shadow-glow-md {
+    box-shadow: 0 0 15px var(--shadow-glow);
+  }
+  .shadow-glow-lg {
+    box-shadow: 0 0 25px var(--shadow-glow);
+  }
 }
