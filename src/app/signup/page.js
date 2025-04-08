@@ -70,7 +70,7 @@ export default function SignupPage() {
           />
           <input
             type="text"
-            placeholder="Camera Location (e.g., Gate A)"
+            placeholder="Camera Location (e.g., Living Room)"
             value={form.cameraLocation}
             onChange={(e) => setForm({ ...form, cameraLocation: e.target.value })}
             className="w-full p-4 bg-space-black rounded-lg"
