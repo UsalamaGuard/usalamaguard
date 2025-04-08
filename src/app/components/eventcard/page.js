@@ -5,18 +5,19 @@ import { motion } from "framer-motion";
 import { Zap, MapPin, AlertCircle, CheckCircle, XCircle, X } from "lucide-react";
 
 export default function EventCard({
-  event, // Full event object from backend
-  imageSrc, // Renamed from 'image' for clarity
-  location,
-  severity,
-  status,
-  timestamp,
-  onUpdateStatus, // Prop to update status in backend
+  event = {}, // Default to empty object if undefined
+  imageSrc = "", // Default to empty string
+  location = "Unknown Location", // Default fallback
+  severity = "medium", // Default severity
+  status = "Active", // Default status
+  timestamp = new Date().toISOString(), // Default to current time
+  onUpdateStatus = () => {}, // Default to no-op function
 }) {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
 
-  // Avoid accessing properties if event is undefined
-  const eventType = event?.type || 'Unknown Type'; // Default to a fallback value
+  // Safely access event.type with fallback
+  const eventType = event?.type || "Unknown Type";
+
   const severityStyles = {
     low: "bg-glow-cyan/20 text-glow-cyan border-glow-cyan/50",
     medium: "bg-cosmic-purple/20 text-cosmic-purple border-cosmic-purple/50",
@@ -34,13 +35,13 @@ export default function EventCard({
 
   const handleResolve = () => {
     if (status !== "Resolved") {
-      onUpdateStatus(event._id, "Resolved");
+      onUpdateStatus(event._id || "unknown-id", "Resolved"); // Fallback for event._id
     }
   };
 
   const handleDismiss = () => {
     if (status !== "Dismissed") {
-      onUpdateStatus(event._id, "Dismissed");
+      onUpdateStatus(event._id || "unknown-id", "Dismissed"); // Fallback for event._id
     }
   };
 
