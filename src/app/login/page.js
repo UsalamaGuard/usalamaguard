@@ -2,33 +2,40 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation"; // Added for manual redirection
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
-  const router = useRouter(); // Added to manually redirect on success
+  const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     console.log("Submitting login form with:", form);
+
     const res = await signIn("credentials", {
       email: form.email,
       password: form.password,
-      redirect: false, // Changed to false to handle redirect manually
+      redirect: false, // Handle redirect manually
     });
+
     console.log("signIn response:", res);
-    if (res?.error) {
-      console.log("Login error from NextAuth:", res.error);
-      setError("Invalid credentials"); // Display a user-friendly message
-    } else if (res?.ok) {
+
+    if (res?.ok) {
       console.log("Login successful, redirecting to dashboard");
-      router.push("/dashboard"); // Manually redirect to dashboard
+      router.push("/dashboard"); // Direct redirect on success
     } else {
-      console.log("Unexpected response:", res);
-      setError("An unexpected error occurred");
+      // Handle all errors locally, no redirect to /auth/error
+      console.log("Login failed:", res?.error || "Unknown error");
+      if (res?.status === 401) {
+        setError("Invalid email or password");
+      } else if (res?.status === 500 || res?.error?.includes("Database")) {
+        setError("Server error, please try again later");
+      } else {
+        setError("An unexpected error occurred");
+      }
     }
   };
 
@@ -62,7 +69,10 @@ export default function LoginPage() {
           {error && <p className="text-red-500 text-center">{error}</p>}
         </form>
         <p className="mt-4 text-center">
-          Don’t have an account? <Link href="/signup" className="text-glow-cyan">Sign Up</Link>
+          Don’t have an account?{" "}
+          <Link href="/signup" className="text-glow-cyan">
+            Sign Up
+          </Link>
         </p>
       </div>
     </div>

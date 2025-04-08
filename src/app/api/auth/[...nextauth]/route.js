@@ -22,7 +22,7 @@ const authOptions = {
               password: credentials.password,
             },
             {
-              headers: { "Content-Type": "application/json" }, // Ensure headers match curl
+              headers: { "Content-Type": "application/json" },
             }
           );
           console.log("Axios response status:", res.status);
@@ -36,21 +36,21 @@ const authOptions = {
             };
           }
           console.log("Authorization failed: No valid user data returned");
-          return null;
+          return null; // Return null for failed auth, handled in LoginPage
         } catch (error) {
           console.error("Authorize error:", {
             message: error.message,
             status: error.response?.status,
             data: error.response?.data,
-            headers: error.response?.headers,
           });
-          return null;
+          return null; // Return null instead of throwing, let client handle
         }
       },
     }),
   ],
   pages: {
-    signIn: "/login",
+    signIn: "/login", // Keep custom sign-in page
+    error: null, // Disable default error page
   },
   session: {
     strategy: "jwt",
@@ -69,6 +69,7 @@ const authOptions = {
       return session;
     },
   },
+  secret: process.env.NEXTAUTH_SECRET || "default-secret-for-dev", // Required for JWT encryption
   debug: true,
 };
 
