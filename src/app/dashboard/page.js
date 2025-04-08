@@ -19,13 +19,14 @@ export default function DashboardPage() {
   const [pendingNotification, setPendingNotification] = useState(null);
   const [isSoundOn, setIsSoundOn] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [cameraLocation, setCameraLocation] = useState(""); // New state for camera location
   const cardsPerPage = 6;
   const audioRef = useRef(null);
   const videoRef = useRef(null);
   const lastScreenshotTime = useRef(0);
+  const socketRef = useRef(null);
   const router = useRouter();
 
-  // Use the backend URL from the environment variable
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   // Redirect if not authenticated
@@ -33,35 +34,38 @@ export default function DashboardPage() {
     if (status === "unauthenticated") {
       router.push("/login");
     }
- }, [status, router]);
+  }, [status, router]);
 
-  // Socket connection with user-specific events
-  const socket = io(backendUrl, {
-    query: { userId: session?.user?.id },
-  });
-
+  // Fetch camera location
   useEffect(() => {
-    if (!session) return;
+    if (!session || !backendUrl) return;
 
-    const fetchEvents = async () => {
+    const fetchCameraLocation = async () => {
       try {
-        const res = await axios.get(`${backendUrl}/api/events`, {
-          params: { userId: session.user.id },
-        });
-        setEvents(res.data);
-        console.log("Initial events fetched:", res.data.length);
+        const res = await axios.get(`${backendUrl}/api/users/${session.user.id}/camera-location`);
+        setCameraLocation(res.data.cameraLocation || "Unknown Location");
+        console.log("Camera location fetched:", res.data.cameraLocation);
       } catch (err) {
-        console.error("Error fetching events:", err);
+        console.error("Error fetching camera location:", err);
+        setCameraLocation("Unknown Location"); // Fallback if fetch fails
       }
     };
-    fetchEvents();
+
+    fetchCameraLocation();
   }, [session, backendUrl]);
 
+  // Initialize Socket.IO connection
   useEffect(() => {
-    if (!session) return;
+    if (!session || !backendUrl) return;
+
+    socketRef.current = io(backendUrl, {
+      query: { userId: session.user.id },
+    });
+
+    const socket = socketRef.current;
 
     socket.on(`new_event_${session.user.id}`, (newEvent) => {
-      setEvents((prev) => [...prev, newEvent]);
+      setEvents((prev) => [newEvent, ...prev].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
       console.log("New event received:", {
         _id: newEvent._id,
         imagePreview: newEvent.image ? newEvent.image.slice(0, 50) + "..." : "N/A",
@@ -73,19 +77,39 @@ export default function DashboardPage() {
 
     socket.on(`event_updated_${session.user.id}`, (updatedEvent) => {
       setEvents((prev) =>
-        prev.map((event) =>
-          event._id === updatedEvent._id ? updatedEvent : event
-        )
+        prev
+          .map((event) => (event._id === updatedEvent._id ? updatedEvent : event))
+          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
       );
       console.log("Event updated:", updatedEvent);
     });
 
     return () => {
-      socket.off(`new_event_${session.user.id}`);
-      socket.off(`event_updated_${session.user.id}`);
+      socket.disconnect();
+      console.log("Socket disconnected");
     };
-  }, [session]);
+  }, [session, backendUrl]);
 
+  // Fetch initial events
+  useEffect(() => {
+    if (!session || !backendUrl) return;
+
+    const fetchEvents = async () => {
+      try {
+        const res = await axios.get(`${backendUrl}/api/events`, {
+          params: { userId: session.user.id },
+        });
+        const sortedEvents = res.data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        setEvents(sortedEvents);
+        console.log("Initial events fetched:", sortedEvents.length);
+      } catch (err) {
+        console.error("Error fetching events:", err);
+      }
+    };
+    fetchEvents();
+  }, [session, backendUrl]);
+
+  // Handle pending notifications
   useEffect(() => {
     if (pendingNotification) {
       setNotifications((prev) => [...prev, pendingNotification]);
@@ -93,21 +117,23 @@ export default function DashboardPage() {
     }
   }, [pendingNotification]);
 
+  // Play notification sound
   useEffect(() => {
     if (isSoundOn && notifications.length > 0) {
-      audioRef.current.play().catch((err) => console.error("Audio play error:", err));
+      audioRef.current?.play().catch((err) => console.error("Audio play error:", err));
     }
   }, [notifications, isSoundOn]);
 
+  // Update event status
   const updateEventStatus = async (eventId, newStatus) => {
     try {
       const res = await axios.patch(`${backendUrl}/api/events/${eventId}`, {
         status: newStatus,
       });
       setEvents((prev) =>
-        prev.map((event) =>
-          event._id === eventId ? res.data : event
-        )
+        prev
+          .map((event) => (event._id === eventId ? res.data : event))
+          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
       );
       console.log("Status updated:", res.data);
     } catch (err) {
@@ -115,47 +141,45 @@ export default function DashboardPage() {
     }
   };
 
-  const filteredEvents = events.filter((event) =>
-    filter === "All" ? true : event.status === filter
-  );
-  const totalPages = Math.ceil(filteredEvents.length / cardsPerPage);
-  const startIndex = (currentPage - 1) * cardsPerPage;
-  const paginatedEvents = filteredEvents.slice(startIndex, startIndex + cardsPerPage);
-
-  const stats = {
-    active: events.filter((e) => e.status === "Active").length,
-    resolved: events.filter((e) => e.status === "Resolved").length,
-    dismissed: events.filter((e) => e.status === "Dismissed").length,
-  };
-
+  // Camera setup - Ensure it stays on
   useEffect(() => {
+    let stream = null;
+
     const startCamera = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.onloadedmetadata = () => {
+            videoRef.current.play();
             console.log("Camera stream loaded:", videoRef.current.videoWidth, videoRef.current.videoHeight);
+          };
+          videoRef.current.onerror = (err) => {
+            console.error("Video element error:", err);
           };
         }
       } catch (err) {
         console.error("Error accessing camera:", err);
+        setTimeout(startCamera, 5000);
       }
     };
-    startCamera();
+
+    if (status === "authenticated") {
+      startCamera();
+    }
 
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject;
+      if (stream) {
         const tracks = stream.getTracks();
         tracks.forEach((track) => track.stop());
         console.log("Camera stream stopped");
       }
     };
-  }, []);
+  }, [status]);
 
+  // Screenshot capture
   useEffect(() => {
-    if (!session) return;
+    if (!session || !backendUrl || !cameraLocation) return;
 
     const captureScreenshot = async () => {
       if (!videoRef.current || !videoRef.current.srcObject) {
@@ -180,7 +204,7 @@ export default function DashboardPage() {
           image: imageData,
           timestamp: new Date().toISOString(),
           type: "Motion Detected",
-          location: "Gate A", // Replace with user’s cameraLocation if set
+          location: cameraLocation, // Use fetched camera location
           status: "Active",
           severity: "Medium",
         });
@@ -201,32 +225,52 @@ export default function DashboardPage() {
 
     const interval = setInterval(checkAndCapture, 10000);
     return () => clearInterval(interval);
-  }, [session, backendUrl]);
+  }, [session, backendUrl, cameraLocation]); // Add cameraLocation to dependencies
+
+  // Filter and paginate events
+  const filteredEvents = events.filter((event) =>
+    filter === "All" ? true : event.status === filter
+  );
+  const totalPages = Math.ceil(filteredEvents.length / cardsPerPage);
+  const startIndex = (currentPage - 1) * cardsPerPage;
+  const paginatedEvents = filteredEvents.slice(startIndex, startIndex + cardsPerPage);
+
+  // Stats calculation
+  const stats = {
+    active: events.filter((e) => e.status === "Active").length,
+    resolved: events.filter((e) => e.status === "Resolved").length,
+    dismissed: events.filter((e) => e.status === "Dismissed").length,
+  };
 
   if (status === "loading") return <div>Loading...</div>;
 
   return (
-    <div className="bg-background text-text min-h-screen">
+    <div className="bg-background text-text min-h-screen relative">
       <Navbar />
-      <section className="pt-28 pb-16 max-w-7xl mx-auto px-6">
+      <section className="pt-28 pb-16 max-w-7xl mx-auto px-6 relative">
         <h1 className="text-4xl font-bold text-center mb-6">Surveillance Dashboard</h1>
         <p className="text-center text-gray-300 mb-8">
           {session ? `Real-time motion detection events for ${session.user.email}` : ""}
         </p>
 
+        {/* Notification Banner */}
         {notifications.length > 0 && (
           <motion.div
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
-            transition={{ duration: 0.5 }}
-            className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-glow-cyan/30 to-cosmic-purple/30 text-white px-6 py-3 rounded-full shadow-lg border border-glow-cyan/50 z-50 flex items-center space-x-2"
+            initial={{ opacity: 0, x: 100 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 100 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="fixed top-20 right-4 sm:right-6 z-50 w-72 sm:w-80 md:w-96 max-w-[90vw] bg-card-bg border border-glow-cyan/50 rounded-xl shadow-lg shadow-glow-cyan/20 p-4 flex items-center justify-between"
           >
-            <Bell className="text-glow-cyan animate-pulse" size={20} />
-            <span className="font-semibold">{notifications[notifications.length - 1]}</span>
+            <div className="flex items-center space-x-3">
+              <Bell className="text-glow-cyan animate-pulse" size={20} />
+              <span className="text-sm sm:text-base font-medium text-text truncate">
+                {notifications[notifications.length - 1]}
+              </span>
+            </div>
             <button
               onClick={() => setNotifications([])}
-              className="ml-4 text-sm text-gray-200 hover:text-white transition-colors"
+              className="text-gray-400 hover:text-glow-cyan transition-colors text-sm font-semibold"
             >
               Dismiss
             </button>
@@ -243,11 +287,12 @@ export default function DashboardPage() {
               ref={videoRef}
               autoPlay
               muted
+              playsInline
               width="100%"
               height="auto"
               className="w-full h-full object-cover"
-            ></video>
-            <div className="absolute top-2 right-2 bg-glow-cyan/20 text-glow-cyan px-2 py-1 rounded-full text-sm">
+            />
+            <div className="absolute top-2 right-2 bg-red-600/80 text-white px-2 py-1 rounded-full text-sm animate-blink">
               Live
             </div>
           </div>
@@ -318,7 +363,8 @@ export default function DashboardPage() {
         <div className="flex justify-center mt-8">
           <button
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            className="p-2 bg-glow-cyan text-white rounded-full"
+            className="p-2 bg-glow-cyan text-white rounded-full disabled:opacity-50"
+            disabled={currentPage === 1}
           >
             <ChevronLeft />
           </button>
@@ -327,7 +373,8 @@ export default function DashboardPage() {
           </span>
           <button
             onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-            className="p-2 bg-glow-cyan text-white rounded-full"
+            className="p-2 bg-glow-cyan text-white rounded-full disabled:opacity-50"
+            disabled={currentPage === totalPages}
           >
             <ChevronRight />
           </button>
