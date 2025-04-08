@@ -16,12 +16,11 @@ export default function Navbar() {
   return (
     <nav className="nav-futuristic border-b border-glow-cyan/20 bg-gradient-to-r from-background via-background/95 to-background shadow-glow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between py-2">
-        {/* Logo and Title - Extreme Left */}
         <div className="flex items-center space-x-2">
           <Link href="/dashboard" className="flex items-center">
             <div className="relative">
               <img
-                src="/logi.jpeg" // Ensure this path is correct
+                src="/logi.jpeg"
                 alt="UsalamaAiGuard Logo"
                 className="h-8 w-8 sm:h-10 sm:w-10 object-contain border-2 border-glow-cyan/50 shadow-glow-md p-1 rounded-full bg-background/80"
               />
@@ -33,12 +32,13 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Right Side: Links, Theme Toggle, and Hamburger */}
         <div className="flex items-center space-x-4">
-          {/* Desktop Links */}
           <div className="hidden sm:flex items-center space-x-6">
             {session ? (
               <>
+                <span className="text-text font-medium">
+                  Welcome, {session.user.firstName}
+                </span>
                 <Link
                   href="/dashboard"
                   className="text-text hover:text-glow-cyan transition-all duration-300 font-medium text-sm"
@@ -76,7 +76,6 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
             className="text-text hover:text-glow-cyan transition-all duration-300 p-1 rounded-full hover:bg-glow-cyan/10"
@@ -85,7 +84,6 @@ export default function Navbar() {
             {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
           </button>
 
-          {/* Hamburger Icon (visible below sm: 640px) */}
           <div className="sm:hidden">
             <button
               onClick={toggleMenu}
@@ -97,12 +95,14 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu - Dropdown */}
       {isOpen && (
         <div className="sm:hidden bg-background/95 border-t border-glow-cyan/20 px-4 py-4 absolute top-full left-0 w-full z-40 shadow-glow-md">
           <div className="flex flex-col space-y-3">
             {session ? (
               <>
+                <span className="text-text font-medium text-center">
+                  Welcome, {session.user.firstName}
+                </span>
                 <Link
                   href="/dashboard"
                   className="text-text hover:text-glow-cyan transition-all duration-300 text-center font-medium"
@@ -148,7 +148,6 @@ export default function Navbar() {
             <button
               onClick={toggleTheme}
               className="text-text hover:text-glow-cyan transition-all duration-300 text-center font-medium"
-              aria-label="Toggle theme"
             >
               {theme === "dark" ? "Light Mode" : "Dark Mode"}
             </button>

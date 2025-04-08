@@ -5,12 +5,13 @@ import { motion } from "framer-motion";
 import { Zap, MapPin, AlertCircle, CheckCircle, XCircle, X } from "lucide-react";
 
 export default function EventCard({
+  event, // Full event object from backend
+  imageSrc, // Renamed from 'image' for clarity
+  location,
+  severity,
+  status,
   timestamp,
-  image,
-  type = "Motion Detected",
-  location = "Front Door",
-  status = "Active",
-  severity = "medium",
+  onUpdateStatus, // Prop to update status in backend
 }) {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
 
@@ -18,7 +19,7 @@ export default function EventCard({
   const severityStyles = {
     low: "bg-glow-cyan/20 text-glow-cyan border-glow-cyan/50",
     medium: "bg-cosmic-purple/20 text-cosmic-purple border-cosmic-purple/50",
-    high: "bg-dark-matter/20 text-text border-dark-matter/50", // Adjusted for readability
+    high: "bg-dark-matter/20 text-text border-dark-matter/50",
   };
 
   const statusIcons = {
@@ -29,6 +30,18 @@ export default function EventCard({
 
   const handleViewDetails = () => setIsPopupOpen(true);
   const handleClosePopup = () => setIsPopupOpen(false);
+
+  const handleResolve = () => {
+    if (status !== "Resolved") {
+      onUpdateStatus(event._id, "Resolved");
+    }
+  };
+
+  const handleDismiss = () => {
+    if (status !== "Dismissed") {
+      onUpdateStatus(event._id, "Dismissed");
+    }
+  };
 
   return (
     <>
@@ -43,7 +56,7 @@ export default function EventCard({
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center">
             <Zap className="text-glow-cyan mr-2" size={20} />
-            <span className="text-text font-semibold">{type}</span>
+            <span className="text-text font-semibold">{event.type}</span>
           </div>
           <span
             className={`text-sm px-2 py-1 rounded-full border ${severityStyles[severity] || severityStyles.medium}`}
@@ -53,9 +66,9 @@ export default function EventCard({
         </div>
 
         {/* Image */}
-        {image && (
+        {imageSrc && (
           <img
-            src={image}
+            src={imageSrc}
             alt="Captured Event"
             className="mt-2 rounded-lg max-w-full h-48 object-cover"
           />
@@ -87,10 +100,16 @@ export default function EventCard({
           </button>
           {status === "Active" && (
             <>
-              <button className="text-glow-cyan hover:text-glow-cyan/80 transition-all duration-300 text-sm">
+              <button
+                onClick={handleResolve}
+                className="text-glow-cyan hover:text-glow-cyan/80 transition-all duration-300 text-sm"
+              >
                 Mark as Resolved
               </button>
-              <button className="text-gray-400 hover:text-gray-300 transition-all duration-300 text-sm">
+              <button
+                onClick={handleDismiss}
+                className="text-gray-400 hover:text-gray-300 transition-all duration-300 text-sm"
+              >
                 Dismiss
               </button>
             </>
@@ -114,16 +133,16 @@ export default function EventCard({
           >
             {/* Header */}
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl sm:text-2xl font-bold text-text">{type} Details</h2>
+              <h2 className="text-xl sm:text-2xl font-bold text-text">{event.type} Details</h2>
               <button onClick={handleClosePopup} className="text-text hover:text-glow-cyan">
                 <X size={24} />
               </button>
             </div>
 
             {/* Image */}
-            {image && (
+            {imageSrc && (
               <img
-                src={image}
+                src={imageSrc}
                 alt="Captured Event"
                 className="w-full h-40 sm:h-64 object-cover rounded-lg mb-4"
               />
@@ -136,7 +155,7 @@ export default function EventCard({
                 {new Date(timestamp).toLocaleString()}
               </p>
               <p>
-                <span className="font-semibold text-text">Type:</span> {type}
+                <span className="font-semibold text-text">Type:</span> {event.type}
               </p>
               <p>
                 <span className="font-semibold text-text">Location:</span> {location}

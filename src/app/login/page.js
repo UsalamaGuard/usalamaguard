@@ -2,23 +2,34 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation"; // Added for manual redirection
 import Link from "next/link";
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
-  const router = useRouter();
+  const router = useRouter(); // Added to manually redirect on success
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    console.log("Submitting login form with:", form);
     const res = await signIn("credentials", {
-      redirect: false,
       email: form.email,
       password: form.password,
+      redirect: false, // Changed to false to handle redirect manually
     });
-    if (res?.error) setError("Invalid credentials");
-    else router.push("/dashboard");
+    console.log("signIn response:", res);
+    if (res?.error) {
+      console.log("Login error from NextAuth:", res.error);
+      setError("Invalid credentials"); // Display a user-friendly message
+    } else if (res?.ok) {
+      console.log("Login successful, redirecting to dashboard");
+      router.push("/dashboard"); // Manually redirect to dashboard
+    } else {
+      console.log("Unexpected response:", res);
+      setError("An unexpected error occurred");
+    }
   };
 
   return (
