@@ -19,7 +19,7 @@ export default function DashboardPage() {
   const [pendingNotification, setPendingNotification] = useState(null);
   const [isSoundOn, setIsSoundOn] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [cameraLocation, setCameraLocation] = useState(""); // New state for camera location
+  const [cameraLocation, setCameraLocation] = useState("Loading..."); // Default to "Loading..." until fetched
   const cardsPerPage = 6;
   const audioRef = useRef(null);
   const videoRef = useRef(null);
@@ -43,11 +43,12 @@ export default function DashboardPage() {
     const fetchCameraLocation = async () => {
       try {
         const res = await axios.get(`${backendUrl}/api/users/${session.user.id}/camera-location`);
-        setCameraLocation(res.data.cameraLocation || "Unknown Location");
-        console.log("Camera location fetched:", res.data.cameraLocation);
+        const location = res.data.cameraLocation || "Not Set"; // Fallback if not set
+        setCameraLocation(location);
+        console.log("Camera location fetched:", location);
       } catch (err) {
         console.error("Error fetching camera location:", err);
-        setCameraLocation("Unknown Location"); // Fallback if fetch fails
+        setCameraLocation("Not Set"); // Fallback if fetch fails
       }
     };
 
@@ -141,7 +142,7 @@ export default function DashboardPage() {
     }
   };
 
-  // Camera setup - Ensure it stays on
+  // Camera setup
   useEffect(() => {
     let stream = null;
 
@@ -153,9 +154,6 @@ export default function DashboardPage() {
           videoRef.current.onloadedmetadata = () => {
             videoRef.current.play();
             console.log("Camera stream loaded:", videoRef.current.videoWidth, videoRef.current.videoHeight);
-          };
-          videoRef.current.onerror = (err) => {
-            console.error("Video element error:", err);
           };
         }
       } catch (err) {
@@ -170,8 +168,7 @@ export default function DashboardPage() {
 
     return () => {
       if (stream) {
-        const tracks = stream.getTracks();
-        tracks.forEach((track) => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
         console.log("Camera stream stopped");
       }
     };
@@ -225,7 +222,7 @@ export default function DashboardPage() {
 
     const interval = setInterval(checkAndCapture, 10000);
     return () => clearInterval(interval);
-  }, [session, backendUrl, cameraLocation]); // Add cameraLocation to dependencies
+  }, [session, backendUrl, cameraLocation]);
 
   // Filter and paginate events
   const filteredEvents = events.filter((event) =>
@@ -250,7 +247,7 @@ export default function DashboardPage() {
       <section className="pt-28 pb-16 max-w-7xl mx-auto px-6 relative">
         <h1 className="text-4xl font-bold text-center mb-6">Surveillance Dashboard</h1>
         <p className="text-center text-gray-300 mb-8">
-          {session ? `Real-time motion detection events for ${session.user.email}` : ""}
+          {session ? `Real-time motion detection events for ${session.user.email} at ${cameraLocation}` : ""}
         </p>
 
         {/* Notification Banner */}
@@ -280,7 +277,7 @@ export default function DashboardPage() {
         <div className="mb-8 bg-card-bg rounded-2xl p-4 shadow-glow-md">
           <div className="flex items-center mb-2">
             <Video className="text-glow-cyan mr-2" size={24} />
-            <h2 className="text-xl font-semibold">Live Feed</h2>
+            <h2 className="text-xl font-semibold">Live Feed - {cameraLocation}</h2>
           </div>
           <div className="relative w-full h-64 sm:h-80 bg-background/50 rounded-lg overflow-hidden">
             <video
@@ -350,7 +347,7 @@ export default function DashboardPage() {
                 key={event._id}
                 event={event}
                 imageSrc={event.image}
-                location={event.location}
+                location={event.location || cameraLocation} // Use fetched cameraLocation as fallback
                 severity={event.severity}
                 status={event.status}
                 timestamp={event.timestamp}
