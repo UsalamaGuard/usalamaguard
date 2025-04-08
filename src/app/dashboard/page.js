@@ -19,7 +19,7 @@ export default function DashboardPage() {
   const [pendingNotification, setPendingNotification] = useState(null);
   const [isSoundOn, setIsSoundOn] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [cameraLocation, setCameraLocation] = useState("");
+  const [cameraLocation, setCameraLocation] = useState(""); // New state for camera location
   const cardsPerPage = 6;
   const audioRef = useRef(null);
   const videoRef = useRef(null);
@@ -36,27 +36,18 @@ export default function DashboardPage() {
     }
   }, [status, router]);
 
-  // Log session for debugging
-  useEffect(() => {
-    if (session) {
-      console.log("Session data:", session);
-    }
-  }, [session]);
-
   // Fetch camera location
   useEffect(() => {
     if (!session || !backendUrl) return;
 
     const fetchCameraLocation = async () => {
       try {
-        console.log("Fetching camera location for user ID:", session.user.id);
         const res = await axios.get(`${backendUrl}/api/users/${session.user.id}/camera-location`);
-        const location = res.data.cameraLocation || "Unknown Location";
-        setCameraLocation(location);
-        console.log("Camera location fetched:", location);
+        setCameraLocation(res.data.cameraLocation || "Unknown Location");
+        console.log("Camera location fetched:", res.data.cameraLocation);
       } catch (err) {
-        console.error("Error fetching camera location:", err.response?.data || err.message);
-        setCameraLocation("Unknown Location");
+        console.error("Error fetching camera location:", err);
+        setCameraLocation("Unknown Location"); // Fallback if fetch fails
       }
     };
 
@@ -77,7 +68,6 @@ export default function DashboardPage() {
       setEvents((prev) => [newEvent, ...prev].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
       console.log("New event received:", {
         _id: newEvent._id,
-        location: newEvent.location,
         imagePreview: newEvent.image ? newEvent.image.slice(0, 50) + "..." : "N/A",
       });
       setTimeout(() => {
@@ -111,7 +101,7 @@ export default function DashboardPage() {
         });
         const sortedEvents = res.data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         setEvents(sortedEvents);
-        console.log("Initial events fetched:", sortedEvents.length, "Events:", sortedEvents);
+        console.log("Initial events fetched:", sortedEvents.length);
       } catch (err) {
         console.error("Error fetching events:", err);
       }
@@ -151,7 +141,7 @@ export default function DashboardPage() {
     }
   };
 
-  // Camera setup
+  // Camera setup - Ensure it stays on
   useEffect(() => {
     let stream = null;
 
@@ -189,10 +179,7 @@ export default function DashboardPage() {
 
   // Screenshot capture
   useEffect(() => {
-    if (!session || !backendUrl || !cameraLocation || cameraLocation === "Unknown Location") {
-      console.log("Skipping screenshot capture: cameraLocation not ready");
-      return;
-    }
+    if (!session || !backendUrl || !cameraLocation) return;
 
     const captureScreenshot = async () => {
       if (!videoRef.current || !videoRef.current.srcObject) {
@@ -217,11 +204,11 @@ export default function DashboardPage() {
           image: imageData,
           timestamp: new Date().toISOString(),
           type: "Motion Detected",
-          location: cameraLocation,
+          location: cameraLocation, // Use fetched camera location
           status: "Active",
           severity: "Medium",
         });
-        console.log("Screenshot sent to backend:", response.data);
+        console.log("Screenshot sent to backend:", response.data._id);
         lastScreenshotTime.current = Date.now();
       } catch (err) {
         console.error("Error sending screenshot:", err.response?.data || err.message);
@@ -238,7 +225,7 @@ export default function DashboardPage() {
 
     const interval = setInterval(checkAndCapture, 10000);
     return () => clearInterval(interval);
-  }, [session, backendUrl, cameraLocation]);
+  }, [session, backendUrl, cameraLocation]); // Add cameraLocation to dependencies
 
   // Filter and paginate events
   const filteredEvents = events.filter((event) =>
